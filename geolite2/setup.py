@@ -7,7 +7,7 @@ with open(os.path.join(os.path.dirname(__file__),
 
 
 setup(
-    name='python-geoip-geolite2',
+    name='python-geoip-geolite2-yplan',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
     version=version,

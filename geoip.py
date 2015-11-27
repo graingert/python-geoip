@@ -8,7 +8,7 @@ from datetime import datetime
 from struct import Struct
 
 
-MMDB_METADATA_START = '\xAB\xCD\xEFMaxMind.com'
+MMDB_METADATA_START = b'\xAB\xCD\xEFMaxMind.com'
 MMDB_METADATA_BLOCK_MAX_SIZE = 131072
 MMDB_DATA_SECTION_SEPARATOR = 16
 
@@ -222,7 +222,7 @@ class MaxMindDatabase(Database):
         self.is_ipv6 = md['ip_version'] == 6
         self.nodes = md['node_count']
         self.record_size = md['record_size']
-        self.node_size = self.record_size / 4
+        self.node_size = self.record_size // 4
         self.db_size = self.nodes * self.node_size
 
         self._buf = buf
@@ -252,10 +252,13 @@ class MaxMindDatabase(Database):
         node = self._find_start_node(bits)
 
         seen = set()
-        for i in xrange(bits):
+        for i in range(bits):
             if node >= self.nodes:
                 break
-            bit = (ord(packed_addr[i >> 3]) >> (7 - (i % 8))) & 1
+            try:
+                bit = (packed_addr[i >> 3]) >> (7 - (i % 8)) & 1
+            except TypeError:
+                bit = (ord(packed_addr[i >> 3]) >> (7 - (i % 8))) & 1
             node = self._parse_node(node, bit)
             if node in seen:
                 raise LookupError('Circle in tree detected')
@@ -276,7 +279,7 @@ class MaxMindDatabase(Database):
         # the worst thing that can happen is that the ipv4 start node is
         # calculated multiple times.
         node = 0
-        for netmask in xrange(96):
+        for netmask in range(96):
             if node >= self.nodes:
                 break
             node = self._parse_node(netmask, 0)
@@ -289,7 +292,7 @@ class MaxMindDatabase(Database):
 
         if self.record_size == 24:
             offset += index * 3
-            bytes = '\x00' + self._buf[offset:offset + 3]
+            bytes_read = b'\x00' + self._buf[offset:offset + 3]
         elif self.record_size == 28:
             b = ord(self._buf[offset + 3:offset + 4])
             if index:
@@ -297,13 +300,16 @@ class MaxMindDatabase(Database):
             else:
                 b = (0xF0 & b) >> 4
             offset += index * 4
-            bytes = chr(b) + self._buf[offset:offset + 3]
+            try:
+                bytes_read = chr(b) + self._buf[offset:offset + 3]
+            except TypeError:
+                bytes_read = bytes([b]) + self._buf[offset:offset + 3]
         elif self.record_size == 32:
             offset += index * 4
-            bytes = self._buf[offset:offset + 4]
+            bytes_read = self._buf[offset:offset + 4]
         else:
             raise LookupError('Invalid record size')
-        return _int_unpack(bytes)[0]
+        return _int_unpack(bytes_read)[0]
 
     def __repr__(self):
         return '<%s %r>' % (
@@ -390,8 +396,8 @@ def make_struct_parser(code):
     struct = Struct('>' + code)
     def unpack_func(self, size, offset):
         new_offset = offset + struct.size
-        bytes = self._buf[offset:new_offset].rjust(struct.size, '\x00')
-        value = struct.unpack(bytes)[0]
+        bytes_read = self._buf[offset:new_offset].rjust(struct.size, b'\x00')
+        value = struct.unpack(bytes_read)[0]
         return value, new_offset
     return unpack_func
 
@@ -404,12 +410,15 @@ class _MaxMindParser(object):
 
     def _parse_ptr(self, size, offset):
         ptr_size = ((size >> 3) & 0x3) + 1
-        bytes = self._buf[offset:offset + ptr_size]
+        bytes_read = self._buf[offset:offset + ptr_size]
         if ptr_size != 4:
-            bytes = chr(size & 0x7) + bytes
+            try:
+                bytes_read = chr(size & 0x7) + bytes_read
+            except TypeError:
+                bytes_read = bytes([size & 0x7]) + bytes_read
 
         ptr = (
-            _int_unpack(bytes.rjust(4, '\x00'))[0] +
+            _int_unpack(bytes_read.rjust(4, b'\x00'))[0] +
             self._data_offset +
             MMDB_DATA_SECTION_SEPARATOR +
             (0, 2048, 526336, 0)[ptr_size - 1]
@@ -418,8 +427,8 @@ class _MaxMindParser(object):
         return self.read(ptr)[0], offset + ptr_size
 
     def _parse_str(self, size, offset):
-        bytes = self._buf[offset:offset + size]
-        return bytes.decode('utf-8', 'replace'), offset + size
+        bytes_read = self._buf[offset:offset + size]
+        return bytes_read.decode('utf-8', 'replace'), offset + size
 
     _parse_double = make_struct_parser('d')
 
@@ -427,12 +436,12 @@ class _MaxMindParser(object):
         return self._buf[offset:offset + size], offset + size
 
     def _parse_uint(self, size, offset):
-        bytes = self._buf[offset:offset + size]
-        return _long_unpack(bytes.rjust(8, '\x00'))[0], offset + size
+        bytes_read = self._buf[offset:offset + size]
+        return _long_unpack(bytes_read.rjust(8, b'\x00'))[0], offset + size
 
     def _parse_dict(self, size, offset):
         container = {}
-        for _ in xrange(size):
+        for _ in range(size):
             key, offset = self.read(offset)
             value, offset = self.read(offset)
             container[key] = value
@@ -442,7 +451,7 @@ class _MaxMindParser(object):
 
     def _parse_list(self, size, offset):
         rv = [None] * size
-        for idx in xrange(size):
+        for idx in range(size):
             rv[idx], offset = self.read(offset)
         return rv, offset
 
@@ -486,14 +495,14 @@ class _MaxMindParser(object):
 
         if ty != 1 and size >= 29:
             to_read = size - 28
-            bytes = self._buf[new_offset:new_offset + to_read]
+            bytes_read = self._buf[new_offset:new_offset + to_read]
             new_offset += to_read
             if size == 29:
-                size = 29 + ord(bytes)
+                size = 29 + ord(bytes_read)
             elif size == 30:
-                size = 285 + _short_unpack(bytes)[0]
+                size = 285 + _short_unpack(bytes_read)[0]
             elif size > 30:
-                size = 65821 + _int_unpack(bytes.rjust(4, '\x00'))[0]
+                size = 65821 + _int_unpack(bytes_read.rjust(4, b'\x00'))[0]
 
         return self._callbacks[ty](self, size, new_offset)
 

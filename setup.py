@@ -14,7 +14,7 @@ setup(
     maintainer='Thomas Grainger',
     maintainer_email='python-geoip-yplan@graingert.co.uk',
     version='1.2',
-    url='http://github.com/yplan/python-geoip',
+    url='https://github.com/yplan/python-geoip',
     long_description=readme,
     description='Provides GeoIP functionality for Python.',
     py_modules=['geoip'],

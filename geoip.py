@@ -209,7 +209,7 @@ class Database(object):
 
         :rtype: :class:`IPInfo`
         """
-        ip = urllib.urlopen('http://icanhazip.com/').read().strip()
+        ip = urllib.urlopen('https://icanhazip.com/').read().strip()
         return self.lookup(ip)
 
 

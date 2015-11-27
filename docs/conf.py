@@ -211,5 +211,5 @@ man_pages = [
 ]
 
 intersphinx_mapping = {
-    'http://docs.python.org/dev': None
+    'https://docs.python.org/dev': None
 }

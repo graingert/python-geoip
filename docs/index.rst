@@ -10,7 +10,7 @@ also provides an extra library that optionally ships a recent version of
 the Geolite2 database as provided by MaxMind.
 
 The ``python-geoip-geolite2`` package includes GeoLite2 data created by
-MaxMind, available from `maxmind.com <http://www.maxmind.com>`_ under
+MaxMind, available from `maxmind.com <https://www.maxmind.com>`_ under
 the Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 Installation

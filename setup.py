@@ -8,17 +8,25 @@ with open(os.path.join(os.path.dirname(__file__),
 
 
 setup(
-    name='python-geoip',
+    name='python-geoip-yplan',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
+    maintainer='Thomas Grainger',
+    maintainer_email='python-geoip-yplan@graingert.co.uk',
     version='1.2',
-    url='http://github.com/mitsuhiko/python-geoip',
+    url='https://github.com/yplan/python-geoip',
     long_description=readme,
     description='Provides GeoIP functionality for Python.',
     py_modules=['geoip'],
     zip_safe=False,
     classifiers=[
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'License :: OSI Approved :: BSD License',
     ],
 )

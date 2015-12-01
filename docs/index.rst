@@ -40,14 +40,14 @@ using the GeoIP database right away::
     'NA'
     >>> match.timezone
     'America/Los_Angeles'
-    >>> match.subdivisions
-    frozenset(['CA'])
+    >>> list(match.subdivisions)
+    ['CA']
 
 If you want to use your own MaxMind database (for instance because you
 paid for the commercial version) you can open the database yourself::
 
     >>> from geoip import open_database
-    >>> db = open_database('path/to/my.mmdb')
+    >>> db = open_database('path/to/my.mmdb')  # doctest: +SKIP
 
 API
 ---

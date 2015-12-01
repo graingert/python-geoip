@@ -394,6 +394,7 @@ def _read_mmdb_metadata(buf):
 
 def make_struct_parser(code):
     struct = Struct('>' + code)
+
     def unpack_func(self, size, offset):
         new_offset = offset + struct.size
         bytes_read = self._buf[offset:new_offset].rjust(struct.size, b'\x00')
